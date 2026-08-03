@@ -3,12 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Bookmark & QR Manager</title>
+  <title>LinkHub & QR Manager</title>
 
   <!-- QRCode.js Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #1e1b4b 100%);
+      --card-bg: rgba(17, 24, 39, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #6366f1;
+      --cyan: #06b6d4;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -17,243 +27,402 @@
     }
 
     body {
-      background-color: #0f172a;
-      color: #f8fafc;
-      display: flex;
-      justify-content: center;
+      background: var(--bg-gradient);
+      color: var(--text-main);
       min-height: 100vh;
-      padding: 24px 12px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 480px;
-      background: #1e293b;
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      border: 1px solid #334155;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .header h1 {
-      font-size: 24px;
-      color: #38bdf8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .header p {
-      font-size: 13px;
-      color: #94a3b8;
-      margin-top: 4px;
-    }
-
-    .form-group {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
-      background: #0f172a;
-      padding: 16px;
-      border-radius: 14px;
-      border: 1px solid #334155;
+      justify-content: space-between;
+      padding: 20px;
     }
 
-    input, select, button {
+    /* Main Container - Full Width & Height Fill */
+    .app-wrapper {
       width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #334155;
-      background-color: #1e293b;
-      color: #f8fafc;
-      font-size: 14px;
-      outline: none;
-    }
-
-    input:focus, select:focus {
-      border-color: #38bdf8;
-    }
-
-    .row {
-      display: flex;
-      gap: 8px;
-    }
-
-    .row > * {
+      max-width: 1400px;
+      margin: 0 auto;
       flex: 1;
-    }
-
-    button.btn-add {
-      background: #38bdf8;
-      color: #0f172a;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    button.btn-add:hover {
-      background: #0284c7;
-      color: #ffffff;
-    }
-
-    /* Controls (Search & Filter) */
-    .controls {
       display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
+      flex-direction: column;
     }
 
-    .bookmark-card {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 10px;
+    /* Top Bar Header */
+    .app-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
-    .bm-info h3 {
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 46px;
+      height: 46px;
+      background: linear-gradient(135deg, #6366f1, #06b6d4);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .brand h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .brand p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Stats Chips */
+    .stats-bar {
+      display: flex;
+      gap: 10px;
+    }
+
+    .stat-chip {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .stat-chip strong {
+      color: var(--cyan);
+    }
+
+    /* Grid - Desktop Flexible Dashboard */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+
+    @media (max-width: 850px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Glass Panels */
+    .panel {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Input Controls */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background: rgba(11, 15, 25, 0.7);
+      color: var(--text-main);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .input-field:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    /* Search & Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    /* Dynamic Bookmark Cards Container */
+    .bookmark-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      max-height: calc(100vh - 230px);
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    @media (max-width: 850px) {
+      .bookmark-list {
+        max-height: 400px;
+      }
+    }
+
+    .bookmark-list::-webkit-scrollbar {
+      width: 5px;
+    }
+    .bookmark-list::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.15);
+      border-radius: 4px;
+    }
+
+    .bm-card {
+      background: rgba(11, 15, 25, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .bm-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .bm-title {
       font-size: 15px;
-      color: #f8fafc;
+      font-weight: 600;
+      color: var(--text-main);
       margin-bottom: 4px;
     }
 
-    .bm-info a {
+    .bm-url {
       font-size: 12px;
-      color: #38bdf8;
+      color: var(--cyan);
       text-decoration: none;
-      word-break: break-all;
+      display: inline-block;
+      max-width: 380px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .bm-tag {
+    @media (max-width: 1100px) {
+      .bm-url { max-width: 200px; }
+    }
+
+    .tag-badge {
       display: inline-block;
       font-size: 10px;
-      background: #334155;
-      color: #94a3b8;
-      padding: 2px 6px;
-      border-radius: 4px;
-      margin-top: 4px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-top: 6px;
       text-transform: uppercase;
-      font-weight: bold;
+      letter-spacing: 0.5px;
     }
 
-    .bm-actions {
+    /* Dynamic Tag Colors */
+    .tag-coding { background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .tag-college { background: rgba(236, 72, 153, 0.2); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
+    .tag-travel { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .tag-general { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+    .action-group {
       display: flex;
       gap: 8px;
     }
 
-    .action-btn {
-      background: #1e293b;
-      border: 1px solid #334155;
-      padding: 8px;
-      border-radius: 6px;
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      font-size: 14px;
-      width: auto;
+      transition: all 0.2s ease;
     }
 
-    .action-btn:hover {
-      background: #334155;
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
     }
 
-    /* Modal for QR Code */
+    .icon-btn.delete:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+
+    /* Modal Styling */
     .modal-overlay {
       display: none;
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
       justify-content: center;
       align-items: center;
-      z-index: 100;
+      z-index: 1000;
     }
 
-    .modal {
-      background: #1e293b;
+    .modal-card {
+      background: #111827;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
       padding: 24px;
-      border-radius: 16px;
-      text-align: center;
-      max-width: 300px;
       width: 90%;
-      border: 1px solid #334155;
+      max-width: 320px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
     }
 
     #qrcode {
-      margin: 16px auto;
-      padding: 12px;
       background: white;
+      padding: 12px;
       border-radius: 12px;
       display: inline-block;
+      margin: 16px 0;
     }
 
-    .close-btn {
-      background: #ef4444;
-      color: white;
-      border: none;
-      margin-top: 10px;
-      cursor: pointer;
+    /* Footer Branding */
+    .app-footer {
+      text-align: center;
+      padding-top: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .app-footer span {
+      color: var(--cyan);
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <div class="header">
-      <h1>📌 Link & QR Hub</h1>
-      <p>Save links & generate QR codes instantly</p>
-    </div>
+  <div class="app-wrapper">
+    
+    <!-- Top Header Bar -->
+    <div class="app-header">
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div>
+          <h1>LinkHub & QR</h1>
+          <p>Smart Bookmark & Instant QR Generator</p>
+        </div>
+      </div>
 
-    <!-- Add Form -->
-    <div class="form-group">
-      <input type="text" id="bm-title" placeholder="Website / Note Title">
-      <input type="url" id="bm-url" placeholder="https://example.com">
-      
-      <div class="row">
-        <select id="bm-category">
-          <option value="General">General</option>
-          <option value="Coding">Coding</option>
-          <option value="College">College</option>
-          <option value="Travel">Travel</option>
-        </select>
-        <button class="btn-add" onclick="addBookmark()">+ Save Link</button>
+      <div class="stats-bar">
+        <div class="stat-chip">Saved Links: <strong id="total-count">0</strong></div>
       </div>
     </div>
 
-    <!-- Search & Category Filter -->
-    <div class="controls">
-      <input type="text" id="search-input" placeholder="🔍 Search links..." oninput="renderBookmarks()">
-      <select id="filter-category" onchange="renderBookmarks()">
-        <option value="All">All Categories</option>
-        <option value="General">General</option>
-        <option value="Coding">Coding</option>
-        <option value="College">College</option>
-        <option value="Travel">Travel</option>
-      </select>
-    </div>
+    <!-- Main Grid Dashboard -->
+    <div class="main-grid">
+      
+      <!-- Left Panel: Add Form -->
+      <div class="panel">
+        <div class="panel-title">➕ Add New Bookmark</div>
+        
+        <div class="form-group">
+          <input type="text" id="bm-title" class="input-field" placeholder="Title (e.g. Google Form / GitHub)">
+          <input type="url" id="bm-url" class="input-field" placeholder="URL (e.g. forms.gle/... or example.com)">
+          
+          <select id="bm-category" class="input-field">
+            <option value="General">General</option>
+            <option value="Coding">Coding</option>
+            <option value="College">College</option>
+            <option value="Travel">Travel</option>
+          </select>
 
-    <!-- Bookmarks List -->
-    <div id="bookmarks-list">
-      <!-- Dynamic Items -->
+          <button class="btn-primary" onclick="addBookmark()">Save Link</button>
+        </div>
+      </div>
+
+      <!-- Right Panel: Search & Bookmarks Stream -->
+      <div class="panel">
+        <div class="filter-bar">
+          <input type="text" id="search-input" class="input-field" placeholder="🔍 Search bookmarks..." oninput="renderBookmarks()">
+          <select id="filter-category" class="input-field" style="width: 160px;" onchange="renderBookmarks()">
+            <option value="All">All Categories</option>
+            <option value="General">General</option>
+            <option value="Coding">Coding</option>
+            <option value="College">College</option>
+            <option value="Travel">Travel</option>
+          </select>
+        </div>
+
+        <div class="bookmark-list" id="bookmarks-container">
+          <!-- Dynamic Items Rendered Here -->
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- QR Code Modal -->
+  <!-- Footer Branding -->
+  <footer class="app-footer">
+    Made with ❤️ by <span>Ankit</span>
+  </footer>
+
+  <!-- QR Modal -->
   <div class="modal-overlay" id="qr-modal">
-    <div class="modal">
-      <h3 style="color: #f8fafc;" id="modal-title">QR Code</h3>
+    <div class="modal-card">
+      <h3 id="modal-title" style="font-size: 15px; word-break: break-all;">QR Code</h3>
       <div id="qrcode"></div>
-      <button onclick="downloadQR()" style="background: #10b981; color: white; margin-bottom: 6px;">📥 Download QR</button>
-      <button class="close-btn" onclick="closeModal()">Close</button>
+      
+      <div class="form-group">
+        <button class="btn-primary" onclick="downloadQR()">📥 Download PNG</button>
+        <button class="input-field" style="cursor: pointer; background: transparent;" onclick="closeModal()">Close</button>
+      </div>
     </div>
   </div>
 
@@ -261,7 +430,7 @@
     let bookmarks = [];
 
     window.onload = function() {
-      const saved = localStorage.getItem('smart_bookmarks');
+      const saved = localStorage.getItem('hub_bookmarks_v2');
       if (saved) bookmarks = JSON.parse(saved);
       renderBookmarks();
     };
@@ -272,7 +441,7 @@
       const category = document.getElementById('bm-category').value;
 
       if (!title || !url) {
-        alert('Please fill both Title and URL');
+        alert('Please fill both Title and URL!');
         return;
       }
 
@@ -280,9 +449,7 @@
         url = 'https://' + url;
       }
 
-      const newBm = { id: Date.now(), title, url, category };
-      bookmarks.push(newBm);
-
+      bookmarks.push({ id: Date.now(), title, url, category });
       saveAndRender();
 
       document.getElementById('bm-title').value = '';
@@ -294,17 +461,24 @@
       saveAndRender();
     }
 
+    function copyLink(url) {
+      navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    }
+
     function saveAndRender() {
-      localStorage.setItem('smart_bookmarks', JSON.stringify(bookmarks));
+      localStorage.setItem('hub_bookmarks_v2', JSON.stringify(bookmarks));
       renderBookmarks();
     }
 
     function renderBookmarks() {
-      const list = document.getElementById('bookmarks-list');
+      const container = document.getElementById('bookmarks-container');
       const search = document.getElementById('search-input').value.toLowerCase();
       const filter = document.getElementById('filter-category').value;
 
-      list.innerHTML = '';
+      document.getElementById('total-count').innerText = bookmarks.length;
+
+      container.innerHTML = '';
 
       const filtered = bookmarks.filter(b => {
         const matchesSearch = b.title.toLowerCase().includes(search) || b.url.toLowerCase().includes(search);
@@ -313,37 +487,40 @@
       });
 
       if (filtered.length === 0) {
-        list.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px; font-size:13px;">No bookmarks found.</p>';
+        container.innerHTML = '<p style="text-align:center; color: var(--text-muted); padding: 40px 0; font-size: 13px;">No bookmarks found.</p>';
         return;
       }
 
       filtered.reverse().forEach(b => {
         const card = document.createElement('div');
-        card.className = 'bookmark-card';
+        card.className = 'bm-card';
+        
+        const catClass = 'tag-' + b.category.toLowerCase();
+
         card.innerHTML = `
-          <div class="bm-info">
-            <h3>${b.title}</h3>
-            <a href="${b.url}" target="_blank">${b.url}</a><br>
-            <span class="bm-tag">${b.category}</span>
+          <div>
+            <div class="bm-title">${b.title}</div>
+            <a href="${b.url}" target="_blank" class="bm-url">${b.url}</a><br>
+            <span class="tag-badge ${catClass}">${b.category}</span>
           </div>
-          <div class="bm-actions">
-            <button class="action-btn" onclick="showQR('${b.title}', '${b.url}')" title="Generate QR">📱</button>
-            <button class="action-btn" onclick="deleteBookmark(${b.id})" title="Delete" style="color: #ef4444;">✕</button>
+          <div class="action-group">
+            <button class="icon-btn" onclick="copyLink('${b.url}')" title="Copy Link">📋</button>
+            <button class="icon-btn" onclick="showQR('${b.title}', '${b.url}')" title="Generate QR">📱</button>
+            <button class="icon-btn delete" onclick="deleteBookmark(${b.id})" title="Delete">✕</button>
           </div>
         `;
-        list.appendChild(card);
+        container.appendChild(card);
       });
     }
 
-    // --- QR Code Logic ---
+    // --- QR Modal Logic ---
     let qrContainer = document.getElementById('qrcode');
-    let qrObj = null;
 
     function showQR(title, url) {
       document.getElementById('modal-title').innerText = title;
-      qrContainer.innerHTML = ''; 
+      qrContainer.innerHTML = '';
 
-      qrObj = new QRCode(qrContainer, {
+      new QRCode(qrContainer, {
         text: url,
         width: 160,
         height: 160,
