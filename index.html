@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Bookmark & QR Manager</title>
+
+  <!-- QRCode.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px 12px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid #334155;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+      background: #0f172a;
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid #334155;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background-color: #1e293b;
+      color: #f8fafc;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: #38bdf8;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .row > * {
+      flex: 1;
+    }
+
+    button.btn-add {
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button.btn-add:hover {
+      background: #0284c7;
+      color: #ffffff;
+    }
+
+    /* Controls (Search & Filter) */
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .bookmark-card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .bm-info h3 {
+      font-size: 15px;
+      color: #f8fafc;
+      margin-bottom: 4px;
+    }
+
+    .bm-info a {
+      font-size: 12px;
+      color: #38bdf8;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .bm-tag {
+      display: inline-block;
+      font-size: 10px;
+      background: #334155;
+      color: #94a3b8;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    .bm-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      width: auto;
+    }
+
+    .action-btn:hover {
+      background: #334155;
+    }
+
+    /* Modal for QR Code */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .modal {
+      background: #1e293b;
+      padding: 24px;
+      border-radius: 16px;
+      text-align: center;
+      max-width: 300px;
+      width: 90%;
+      border: 1px solid #334155;
+    }
+
+    #qrcode {
+      margin: 16px auto;
+      padding: 12px;
+      background: white;
+      border-radius: 12px;
+      display: inline-block;
+    }
+
+    .close-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>📌 Link & QR Hub</h1>
+      <p>Save links & generate QR codes instantly</p>
+    </div>
+
+    <!-- Add Form -->
+    <div class="form-group">
+      <input type="text" id="bm-title" placeholder="Website / Note Title">
+      <input type="url" id="bm-url" placeholder="https://example.com">
+      
+      <div class="row">
+        <select id="bm-category">
+          <option value="General">General</option>
+          <option value="Coding">Coding</option>
+          <option value="College">College</option>
+          <option value="Travel">Travel</option>
+        </select>
+        <button class="btn-add" onclick="addBookmark()">+ Save Link</button>
+      </div>
+    </div>
+
+    <!-- Search & Category Filter -->
+    <div class="controls">
+      <input type="text" id="search-input" placeholder="🔍 Search links..." oninput="renderBookmarks()">
+      <select id="filter-category" onchange="renderBookmarks()">
+        <option value="All">All Categories</option>
+        <option value="General">General</option>
+        <option value="Coding">Coding</option>
+        <option value="College">College</option>
+        <option value="Travel">Travel</option>
+      </select>
+    </div>
+
+    <!-- Bookmarks List -->
+    <div id="bookmarks-list">
+      <!-- Dynamic Items -->
+    </div>
+  </div>
+
+  <!-- QR Code Modal -->
+  <div class="modal-overlay" id="qr-modal">
+    <div class="modal">
+      <h3 style="color: #f8fafc;" id="modal-title">QR Code</h3>
+      <div id="qrcode"></div>
+      <button onclick="downloadQR()" style="background: #10b981; color: white; margin-bottom: 6px;">📥 Download QR</button>
+      <button class="close-btn" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+
+  <script>
+    let bookmarks = [];
+
+    window.onload = function() {
+      const saved = localStorage.getItem('smart_bookmarks');
+      if (saved) bookmarks = JSON.parse(saved);
+      renderBookmarks();
+    };
+
+    function addBookmark() {
+      const title = document.getElementById('bm-title').value.trim();
+      let url = document.getElementById('bm-url').value.trim();
+      const category = document.getElementById('bm-category').value;
+
+      if (!title || !url) {
+        alert('Please fill both Title and URL');
+        return;
+      }
+
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+
+      const newBm = { id: Date.now(), title, url, category };
+      bookmarks.push(newBm);
+
+      saveAndRender();
+
+      document.getElementById('bm-title').value = '';
+      document.getElementById('bm-url').value = '';
+    }
+
+    function deleteBookmark(id) {
+      bookmarks = bookmarks.filter(b => b.id !== id);
+      saveAndRender();
+    }
+
+    function saveAndRender() {
+      localStorage.setItem('smart_bookmarks', JSON.stringify(bookmarks));
+      renderBookmarks();
+    }
+
+    function renderBookmarks() {
+      const list = document.getElementById('bookmarks-list');
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const filter = document.getElementById('filter-category').value;
+
+      list.innerHTML = '';
+
+      const filtered = bookmarks.filter(b => {
+        const matchesSearch = b.title.toLowerCase().includes(search) || b.url.toLowerCase().includes(search);
+        const matchesCat = filter === 'All' || b.category === filter;
+        return matchesSearch && matchesCat;
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px; font-size:13px;">No bookmarks found.</p>';
+        return;
+      }
+
+      filtered.reverse().forEach(b => {
+        const card = document.createElement('div');
+        card.className = 'bookmark-card';
+        card.innerHTML = `
+          <div class="bm-info">
+            <h3>${b.title}</h3>
+            <a href="${b.url}" target="_blank">${b.url}</a><br>
+            <span class="bm-tag">${b.category}</span>
+          </div>
+          <div class="bm-actions">
+            <button class="action-btn" onclick="showQR('${b.title}', '${b.url}')" title="Generate QR">📱</button>
+            <button class="action-btn" onclick="deleteBookmark(${b.id})" title="Delete" style="color: #ef4444;">✕</button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    // --- QR Code Logic ---
+    let qrContainer = document.getElementById('qrcode');
+    let qrObj = null;
+
+    function showQR(title, url) {
+      document.getElementById('modal-title').innerText = title;
+      qrContainer.innerHTML = ''; 
+
+      qrObj = new QRCode(qrContainer, {
+        text: url,
+        width: 160,
+        height: 160,
+        colorDark : "#0f172a",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+
+      document.getElementById('qr-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('qr-modal').style.display = 'none';
+    }
+
+    function downloadQR() {
+      const img = qrContainer.querySelector('img');
+      if (img && img.src) {
+        const link = document.createElement('a');
+        link.href = img.src;
+        link.download = 'qrcode.png';
+        link.click();
+      }
+    }
+  </script>
+</body>
+</html>
